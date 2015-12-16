@@ -129,10 +129,9 @@ public class DomoticzSpeechlet implements Speechlet {
 		SimpleCard card = new SimpleCard();
 		String switchName = switchSlot.getValue();
 		System.out.println(switchName);
-		String stateName;
 		String outputSpeechString;
 		if (stateSlot != null && stateSlot.getValue() != null) {
-			stateName = stateSlot.getValue();
+			String stateName = stateSlot.getValue();
 			outputSpeechString = "Turning the " + switchName;
 			if ("on".equals(stateName)) {
 				outputSpeechString += " on";
@@ -148,11 +147,20 @@ public class DomoticzSpeechlet implements Speechlet {
 			return SpeechletResponse.newTellResponse(outputSpeech, card);
 		} else {
 			// no state value provided, report the state
-			// probe the state
-			stateName="unimplemented";
-			outputSpeech.setText(stateName);
-			card.setTitle("State of" + switchName);
-			card.setContent(stateName);
+			ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_LIGHT_LIST_URL));
+			System.out.println("looking for switch: " + switchName);
+			List<String> tempValue = ctx.read("$.result[?(@.Name =~ /" + switchName + "/i)].Status");
+			if (tempValue.size() != 1) {
+				outputSpeechString = "I'm sorry, I can't find a switch with that name.  You can ask me for a list of switches.";
+			} else {
+				if (switchName.substring(switchName.length() - 1).equals("s"))
+					outputSpeechString = switchName + " are " + tempValue.get(0);
+				else
+					outputSpeechString = switchName + " is " + tempValue.get(0);
+			}
+			outputSpeech.setText(outputSpeechString);
+			card.setTitle("State of " + switchName);
+			card.setContent(outputSpeechString);
 			return SpeechletResponse.newTellResponse(outputSpeech, card);
 		}
 	} else {
@@ -182,7 +190,7 @@ public class DomoticzSpeechlet implements Speechlet {
 		System.out.println("looking for temperature of sensor: " + tempSensor);
 		List<String> tempValue = ctx.read("$.result[?(@.Name =~ /" + tempSensor + "/i)].Temp");
 		if (tempValue.size() != 1) {
-			outputSpeechString = "I'm sorry, I can't find a temperature sensor with that name.";
+			outputSpeechString = "I'm sorry, I can't find a temperature sensor with that name. You can ask me for a list of temperature sensors.";
 		} else {
 			outputSpeechString = "The " + tempSensor + " temperature is ";
 			String tempString = String.valueOf(tempValue.get(0));
