@@ -7,14 +7,11 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import javax.json.Json;
-import javax.json.JsonReader;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-import javax.json.JsonObject;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonString;
+import org.apache.commons.lang.StringUtils;
+import java.util.List;
+
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +40,12 @@ public class DomoticzSpeechlet implements Speechlet {
     private static final String STATE_SLOT = "State";
     private static final String TEMPERATURE_SLOT = "Temperature";
     private static final String CHANGE_SLOT = "Change";
+    private static final String TEMPSENSOR_SLOT = "TempSensor";
+
+    private static final String DOMOTICZ_LIGHT_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=light&used=true&order=Name";
+    private static final String DOMOTICZ_TEMP_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=temp&used=true&order=Name";
+    private static final String DOMOTICZ_WEATHER_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=weather&used=true&order=Name";
+    private static final String DOMOTICZ_UTILITY_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=utility&used=true&order=Name";
 
     @Override
     public void onSessionStarted(final SessionStartedRequest request, final Session session)
@@ -80,6 +83,8 @@ public class DomoticzSpeechlet implements Speechlet {
 
         if ("SwitchIntent".equals(intentName)) {
             return getSwitch(intent);
+        } else if ("TemperatureIntent".equals(intentName)) {
+            return getTemperature(intent);
         } else if ("ThermostatIntent".equals(intentName)) {
             return getThermostat(intent);
         } else if ("AMAZON.HelpIntent".equals(intentName)) {
@@ -151,9 +156,59 @@ public class DomoticzSpeechlet implements Speechlet {
 			return SpeechletResponse.newTellResponse(outputSpeech, card);
 		}
 	} else {
-            // There was no item in the intent so return the help prompt.
-            return getHelp();
+		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
+        	SimpleCard card = new SimpleCard();
+		String outputSpeechString;
+		outputSpeechString = "The house has the following switches: ";
+		ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_LIGHT_LIST_URL));
+		List<String> switchList = ctx.read("$.result..Name");
+		String switchListString = StringUtils.join(switchList, ", ");
+		outputSpeechString += switchListString;
+		outputSpeech.setText(outputSpeechString);
+		card.setTitle("Available switches");
+		card.setContent(switchListString);
+		return SpeechletResponse.newTellResponse(outputSpeech, card);
         }
+    }
+    private SpeechletResponse getTemperature(Intent intent) {
+	Slot tempSensorSlot = intent.getSlot(TEMPSENSOR_SLOT);
+
+	if (tempSensorSlot != null && tempSensorSlot.getValue() != null) {
+		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
+		SimpleCard card = new SimpleCard();
+		String tempSensor = tempSensorSlot.getValue();
+		String outputSpeechString;
+		ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_TEMP_LIST_URL));
+		System.out.println("looking for temperature of sensor: " + tempSensor);
+		List<String> tempValue = ctx.read("$.result[?(@.Name =~ /" + tempSensor + "/i)].Temp");
+		if (tempValue.size() != 1) {
+			outputSpeechString = "I'm sorry, I can't find a temperature sensor with that name.";
+		} else {
+			outputSpeechString = "The " + tempSensor + " temperature is ";
+			String tempString = String.valueOf(tempValue.get(0));
+			System.out.println(tempString);
+			int temperature = (int)Math.round(Double.parseDouble(tempString));
+			System.out.println(temperature);
+			outputSpeechString += String.valueOf(temperature) + " degrees";
+		}
+		outputSpeech.setText(outputSpeechString);
+		card.setTitle("Temperature");
+		card.setContent(outputSpeechString);
+		return SpeechletResponse.newTellResponse(outputSpeech, card);
+	} else {
+		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
+        	SimpleCard card = new SimpleCard();
+		String outputSpeechString;
+		outputSpeechString = "The house has the following temperature sensors: ";
+		ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_TEMP_LIST_URL));
+		List<String> tempSensorList = ctx.read("$.result..Name");
+		String tempListString = StringUtils.join(tempSensorList, ", ");
+		outputSpeechString += tempListString;
+		outputSpeech.setText(outputSpeechString);
+		card.setTitle("Available temperature sensors");
+		card.setContent(tempListString);
+		return SpeechletResponse.newTellResponse(outputSpeech, card);
+	}
     }
     private SpeechletResponse getThermostat(Intent intent) {
 	Slot temperatureSlot = intent.getSlot(TEMPERATURE_SLOT);
@@ -225,7 +280,7 @@ public class DomoticzSpeechlet implements Speechlet {
     }
 
 	private String queryDomoticz(String url) {
-		try {
+	    try {
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		con.setRequestMethod("GET");
@@ -243,57 +298,10 @@ public class DomoticzSpeechlet implements Speechlet {
 		}
 		in.close();
 
-		//print result
-		System.out.println(response.toString());
-		parseDomoticzResponse(response);
-
 		return(response.toString());
-		} catch (Exception e) {
-			System.err.println("Caught Exception: " + e.getMessage());
-			return(e.getMessage());
-		}
+	    } catch (Exception e) {
+		System.err.println("Caught Exception: " + e.getMessage());
+		return(e.getMessage());
+	    }
 	}
-
-	private JsonStructure parseDomoticzResponse(StringBuffer response) {
-		JsonReader reader = Json.createReader(new StringReader(response.toString()));
-		JsonStructure jsonst = reader.read();
-
-		navigateTree(jsonst, null);
-
-		return(jsonst);
-	}
-
-
-private void navigateTree(JsonValue tree, String key) {
-   if (key != null)
-      System.out.print("Key " + key + ": ");
-   switch(tree.getValueType()) {
-      case OBJECT:
-         System.out.println("OBJECT");
-         JsonObject object = (JsonObject) tree;
-         for (String name : object.keySet())
-            navigateTree(object.get(name), name);
-         break;
-      case ARRAY:
-         System.out.println("ARRAY");
-         JsonArray array = (JsonArray) tree;
-         for (JsonValue val : array)
-            navigateTree(val, null);
-         break;
-      case STRING:
-         JsonString st = (JsonString) tree;
-         System.out.println("STRING " + st.getString());
-         break;
-      case NUMBER:
-         JsonNumber num = (JsonNumber) tree;
-         System.out.println("NUMBER " + num.toString());
-         break;
-      case TRUE:
-      case FALSE:
-      case NULL:
-         System.out.println(tree.getValueType().toString());
-         break;
-   }
-}
-
 }
