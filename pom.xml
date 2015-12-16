@@ -21,6 +21,11 @@
     <artifactId>javax.json-api</artifactId>
     <version>1.0</version>
 </dependency>
+<dependency>
+    <groupId>org.glassfish</groupId>
+    <artifactId>javax.json</artifactId>
+    <version>1.0.4</version>
+</dependency>
     <dependency>
       <groupId>alexa-skills-kit</groupId>
       <artifactId>alexa-skills-kit</artifactId>
@@ -104,7 +109,7 @@
             <systemProperties>
               <systemProperty>
                 <key>javax.net.ssl.keyStore</key>
-                <value>/home/pi/certificate/java-keystore.jks</value>
+                <value>/home/dacb/certificate/java-keystore.jks</value>
               </systemProperty>
               <systemProperty>
                 <key>javax.net.ssl.keyStorePassword</key>
