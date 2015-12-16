@@ -46,6 +46,7 @@ public class DomoticzSpeechlet implements Speechlet {
     private static final String DOMOTICZ_TEMP_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=temp&used=true&order=Name";
     private static final String DOMOTICZ_WEATHER_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=weather&used=true&order=Name";
     private static final String DOMOTICZ_UTILITY_LIST_URL = "http://domoticz.lan:8080/json.htm?type=devices&filter=utility&used=true&order=Name";
+    private static final String DOMOTICZ_SWITCH_URL = "http://domoticz.lan:8080/json.htm?type=command&param=switchlight&idx=%s&switchcmd=%s";
 
     @Override
     public void onSessionStarted(final SessionStartedRequest request, final Session session)
@@ -130,34 +131,51 @@ public class DomoticzSpeechlet implements Speechlet {
 		String switchName = switchSlot.getValue();
 		System.out.println(switchName);
 		String outputSpeechString;
+		ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_LIGHT_LIST_URL));
+		System.out.println("looking for switch: " + switchName);
+		List<String> statusValue = ctx.read("$.result[?(@.Name =~ /" + switchName + "/i)].Status");
+		if (statusValue.size() != 1) {
+			outputSpeechString = "I'm sorry, I can't find a switch with that name.  You can ask me for a list of switches.";
+			card.setTitle("Switch unknown");
+			card.setContent(outputSpeechString);
+			return SpeechletResponse.newTellResponse(outputSpeech, card);
+		}
 		if (stateSlot != null && stateSlot.getValue() != null) {
+try {
 			String stateName = stateSlot.getValue();
+			List<String> idxValue = ctx.read("$.result[?(@.Name =~ /" + switchName + "/i)].idx");
 			outputSpeechString = "Turning the " + switchName;
+			String switchURL = null;
 			if ("on".equals(stateName)) {
 				outputSpeechString += " on";
+				stateName = "On";
+				switchURL = String.format(DOMOTICZ_SWITCH_URL, idxValue.get(0), stateName);
 			} else if ("off".equals(stateName)) {
 				outputSpeechString += " off";
+				stateName = "Off";
+				switchURL = String.format(DOMOTICZ_SWITCH_URL, idxValue.get(0), stateName);
 			} else {
 				// unknown state
 				System.out.println('|' + stateName + '|');
+				outputSpeechString = "I don't know what state you mean, on or off.";
+			}
+			if (switchURL != null) {
+				System.out.println(switchURL);
+				queryDomoticz(switchURL);
 			}
 			outputSpeech.setText(outputSpeechString);
 			card.setTitle("State of" + switchName);
 			card.setContent(stateName);
+} catch (Exception e) {
+	System.err.println("Caught Exception: " + e.getMessage());
+}
 			return SpeechletResponse.newTellResponse(outputSpeech, card);
 		} else {
 			// no state value provided, report the state
-			ReadContext ctx = JsonPath.parse(queryDomoticz(DOMOTICZ_LIGHT_LIST_URL));
-			System.out.println("looking for switch: " + switchName);
-			List<String> tempValue = ctx.read("$.result[?(@.Name =~ /" + switchName + "/i)].Status");
-			if (tempValue.size() != 1) {
-				outputSpeechString = "I'm sorry, I can't find a switch with that name.  You can ask me for a list of switches.";
-			} else {
-				if (switchName.substring(switchName.length() - 1).equals("s"))
-					outputSpeechString = switchName + " are " + tempValue.get(0);
-				else
-					outputSpeechString = switchName + " is " + tempValue.get(0);
-			}
+			if (switchName.substring(switchName.length() - 1).equals("s"))
+				outputSpeechString = switchName + " are " + statusValue.get(0);
+			else
+				outputSpeechString = switchName + " is " + statusValue.get(0);
 			outputSpeech.setText(outputSpeechString);
 			card.setTitle("State of " + switchName);
 			card.setContent(outputSpeechString);
