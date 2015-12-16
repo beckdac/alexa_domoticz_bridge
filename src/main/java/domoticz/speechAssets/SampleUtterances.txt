@@ -1,3 +1,14 @@
+TemperatureIntent what temperature sensors are available
+TemperatureIntent for a list of temperature sensors
+TemperatureIntent what is the temperature in the {TempSensor}
+TemperatureIntent what is the {TempSensor} temperature
+TemperatureIntent for the {TempSensor} temperature
+TemperatureIntent for the temperature of the {TempSensor}
+TemperatureIntent {TempSensor} temperature
+TemperatureIntent temperature {TempSensor}
+TemperatureIntent temperature of {TempSensor}
+SwitchIntent what switches are available
+SwitchIntent for a list of switches
 SwitchIntent turn {Switch} {State}
 SwitchIntent turn the {Switch} {State}
 SwitchIntent turn my {Switch} {State}
@@ -10,3 +21,25 @@ SwitchIntent switch my {Switch} {State}
 SwitchIntent switch {State} {Switch}
 SwitchIntent switch {State} the {Switch}
 SwitchIntent switch {State} my {Switch}
+SwitchIntent is the {Switch} on
+SwitchIntent is the {Switch} off
+SwitchIntent is the {Switch} on or off
+SwitchIntent what state is the {Switch}
+SwitchIntent are the {Switch} on
+SwitchIntent are the {Switch} off
+SwitchIntent are the {Switch} on or off
+SwitchIntent what state are the {Switch} 
+SwitchIntent is my {Switch} on
+SwitchIntent is my {Switch} off
+SwitchIntent is my {Switch} on or off
+SwitchIntent what state is my {Switch}
+SwitchIntent are my {Switch} on
+SwitchIntent are my {Switch} off
+SwitchIntent are my {Switch} on or off
+SwitchIntent what state are my {Switch} 
+ThermostatIntent what is the thermostat set point
+ThermostatIntent set thermostat to {Temperature}
+ThermostatIntent set thermostat to {Temperature} degrees
+ThermostatIntent turn {Change} the thermostat
+ThermostatIntent turn {Change} the thermostat
+ThermostatIntent what is the thermostat humidity
