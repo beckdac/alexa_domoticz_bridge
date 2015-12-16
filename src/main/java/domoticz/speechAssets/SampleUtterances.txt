@@ -1,0 +1,12 @@
+SwitchIntent turn {Switch} {State}
+SwitchIntent turn the {Switch} {State}
+SwitchIntent turn my {Switch} {State}
+SwitchIntent turn {State} {Switch}
+SwitchIntent turn {State} the {Switch}
+SwitchIntent turn {State} my {Switch}
+SwitchIntent switch {Switch} {State}
+SwitchIntent switch the {Switch} {State}
+SwitchIntent switch my {Switch} {State}
+SwitchIntent switch {State} {Switch}
+SwitchIntent switch {State} the {Switch}
+SwitchIntent switch {State} my {Switch}

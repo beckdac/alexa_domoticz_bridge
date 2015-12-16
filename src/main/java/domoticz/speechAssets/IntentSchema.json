@@ -1,0 +1,26 @@
+{
+  "intents": [
+    {
+      "intent": "SwitchIntent",
+      "slots": [
+        {
+          "name" : "Switch",
+          "type": "LIST_OF_SWITCHES"
+        },
+	{
+	  "name" : "State",
+	  "type" : "LIST_OF_STATES"
+	}
+      ]
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+}
