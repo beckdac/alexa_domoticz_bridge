@@ -41,6 +41,8 @@ public class DomoticzSpeechlet implements Speechlet {
      */
     private static final String SWITCH_SLOT = "Switch";
     private static final String STATE_SLOT = "State";
+    private static final String TEMPERATURE_SLOT = "Temperature";
+    private static final String CHANGE_SLOT = "Change";
 
     @Override
     public void onSessionStarted(final SessionStartedRequest request, final Session session)
@@ -58,10 +60,7 @@ public class DomoticzSpeechlet implements Speechlet {
                 session.getSessionId());
 
         String speechOutput =
-		"The house is here to help. You can ask a question like, "
-			+ "what's the temperature in the sunroom? ... or,"
-			+ "tell me to do something like, "
-			+ "turn on the fish tank light. ... Now, what can I help you with?";
+		"The house is here to help. What can I help you with?";
         // If the user either does not reply to the welcome message or says
         // something that is not understood, they will be prompted again with this text.
         String repromptText = "For instructions on what you can say, please say help me.";
@@ -82,7 +81,7 @@ public class DomoticzSpeechlet implements Speechlet {
         if ("SwitchIntent".equals(intentName)) {
             return getSwitch(intent);
         } else if ("ThermostatIntent".equals(intentName)) {
-            return getSwitch(intent);
+            return getThermostat(intent);
         } else if ("AMAZON.HelpIntent".equals(intentName)) {
             return getHelp();
         } else if ("AMAZON.StopIntent".equals(intentName)) {
@@ -124,17 +123,19 @@ public class DomoticzSpeechlet implements Speechlet {
 		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
 		SimpleCard card = new SimpleCard();
 		String switchName = switchSlot.getValue();
+		System.out.println(switchName);
 		String stateName;
 		String outputSpeechString;
 		if (stateSlot != null && stateSlot.getValue() != null) {
 			stateName = stateSlot.getValue();
 			outputSpeechString = "Turning the " + switchName;
-			if ("On".equals(stateName)) {
+			if ("on".equals(stateName)) {
 				outputSpeechString += " on";
-			} else if ("Off".equals(stateName)) {
+			} else if ("off".equals(stateName)) {
 				outputSpeechString += " off";
 			} else {
 				// unknown state
+				System.out.println('|' + stateName + '|');
 			}
 			outputSpeech.setText(outputSpeechString);
 			card.setTitle("State of" + switchName);
@@ -149,6 +150,35 @@ public class DomoticzSpeechlet implements Speechlet {
 			card.setContent(stateName);
 			return SpeechletResponse.newTellResponse(outputSpeech, card);
 		}
+	} else {
+            // There was no item in the intent so return the help prompt.
+            return getHelp();
+        }
+    }
+    private SpeechletResponse getThermostat(Intent intent) {
+	Slot temperatureSlot = intent.getSlot(TEMPERATURE_SLOT);
+	Slot changeSlot = intent.getSlot(CHANGE_SLOT);
+
+	if (temperatureSlot != null && temperatureSlot.getValue() != null) {
+		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
+		SimpleCard card = new SimpleCard();
+		int temperature = Integer.parseInt(temperatureSlot.getValue());
+		String outputSpeechString;
+		outputSpeechString = "Changing thermostat set point to " + temperature + " degrees";
+		outputSpeech.setText(outputSpeechString);
+		card.setTitle("Thermostat");
+		card.setContent(outputSpeechString);
+		return SpeechletResponse.newTellResponse(outputSpeech, card);
+	} else if (changeSlot != null && changeSlot.getValue() != null) {
+		PlainTextOutputSpeech outputSpeech = new PlainTextOutputSpeech();
+		SimpleCard card = new SimpleCard();
+		String change = changeSlot.getValue();
+		String outputSpeechString;
+		outputSpeechString = "Thermostat " + change;
+		outputSpeech.setText(outputSpeechString);
+		card.setTitle("Thermostat");
+		card.setContent(outputSpeechString);
+		return SpeechletResponse.newTellResponse(outputSpeech, card);
 	} else {
             // There was no item in the intent so return the help prompt.
             return getHelp();
