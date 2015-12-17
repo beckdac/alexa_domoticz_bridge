@@ -10,6 +10,7 @@ Amazon Echo Alexa to domoticz bridge
 * _Overlay onto the Amazon Alexa Skills Kit SDK & Samples_.  Start by downloading and unpacking the Amazon Alexa Skills Kit SDK & Samples zip file. More information about the Amazon Alexa Skills Kit SDK here: [Amazon Apps and Services Developer Portal](https://developer.amazon.com/appsandservices/solutions/alexa/alexa-skills-kit/).  Replace files in the SDK with files from this repository. 
 * _Rebuild the source._  Build the source with the ./rebuild script.
 * _Run the code._ Run with the ./run script.
+
 ### Amazon Echo 
 * _Create a new Alexa Skill on Amazon's Developer site_.  If you haven't done this before, **stop** and setup at least one of the demos in the Skills Kit SDK and make sure it works with the server configuration you intend to use first.
 * Put in the contents of the speechAssets folder into the approriate boxes on the skill's Interaction Model page.
